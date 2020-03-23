@@ -30,6 +30,9 @@ amqp.connect('amqp://localhost', function(error0, connection) {
       if (error2) {
         throw error2;
       }
+      let Compra = [];
+      let Venda = [];
+
       console.log(' [*] Waiting for logs. To exit press CTRL+C');
 
       args.forEach(function(key) {
@@ -37,17 +40,17 @@ amqp.connect('amqp://localhost', function(error0, connection) {
       });
 
       channel.consume(q.queue, function(msg) {
-        // console.log(" [x] %s:'%s'", msg.fields.routingKey, msg.content.toString());
+        let sentido = msg.fields.routingKey.split(".")[0]
+        let ativo = msg.fields.routingKey.split(".")[1]
+        let msgJSON = JSON.parse(msg.content.toString())
 
-        var jsonObj = JSON.parse(msg.content.toString())
-        var jsonContent = JSON.stringify(jsonObj);
-        fs.writeFile("banco.json", jsonContent, 'utf8', function (err) {
-            if (err) {
-                console.log("An error occured while writing JSON Object to File.");
-                return console.log(err);
-            }
-        })
-        console.log("dados persistidos")
+        msgJSON.ativo = ativo
+
+        if(sentido == "venda")
+            FilaVenda.push(msgJSON)
+        if(sentido == "compra")
+            FilaCompra.push(msgJSON)
+
       }, {
         noAck: false
       });
