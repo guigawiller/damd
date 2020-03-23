@@ -12,13 +12,13 @@ amqp.connect('amqp://localhost', function(error0, connection) {
     }
     var exchange = 'BOLSADEVALORES';
     var args = process.argv.slice(2);
-    var key = (args.length > 0) ? args[0] : 'anonymous.info';
-    var msg = args.slice(1).join(' ') || 'Hello World!';
+    var key = (args.length > 0) ? args[0] : 'compra.abev3';
+    var msg = args.slice(1).join(' ') || '{"quant": 1000, "val":10.00}';
 
     channel.assertExchange(exchange, 'topic', {
       durable: false
     });
-    channel.publish(exchange, key, Buffer.from(msg));
+    channel.publish(exchange, key, Buffer.from( JSON.stringify( JSON.parse(msg) ) ));
     console.log(" [x] Sent %s:'%s'", key, msg);
   });
 
