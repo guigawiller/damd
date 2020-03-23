@@ -43,8 +43,10 @@ amqp.connect('amqp://localhost', function(error0, connection) {
         channel.assertExchange(exchange, 'topic', {
           durable: false
         });
-
-        channel.publish(exchange, msg.fields.routingKey, Buffer.from(msg.content.toString()));
+        let sentido = msg.fields.routingKey.split(".")[0]
+        if (sentido != "transacao") {
+          channel.publish(exchange, msg.fields.routingKey, Buffer.from(msg.content.toString()));
+        }
 
         console.log(" [x] Sent %s:'%s'", msg.fields.routingKey, msg.content.toString());
 

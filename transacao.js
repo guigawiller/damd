@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-const fs = require('fs');
 
 var amqp = require('amqplib/callback_api');
 
@@ -18,7 +17,7 @@ amqp.connect('amqp://localhost', function(error0, connection) {
     if (error1) {
       throw error1;
     }
-    var exchange = 'LIVRODEOFERTAS';
+    var exchange = 'TRANSACAO';
 
     channel.assertExchange(exchange, 'topic', {
       durable: false
@@ -30,30 +29,29 @@ amqp.connect('amqp://localhost', function(error0, connection) {
       if (error2) {
         throw error2;
       }
-      let Compra = [];
-      let Venda = [];
-
-      console.log(' [*] Waiting for logs. To exit press CTRL+C');
+      console.log(' [*] Waiting for logs. To exit press CTRL+C', q.queue);
 
       args.forEach(function(key) {
         channel.bindQueue(q.queue, exchange, key);
       });
 
       channel.consume(q.queue, function(msg) {
-        let sentido = msg.fields.routingKey.split(".")[0]
-        let ativo = msg.fields.routingKey.split(".")[1]
-        let msgJSON = JSON.parse(msg.content.toString())
+        console.log(" [x] %s:'%s'", msg.fields.routingKey, msg.content.toString());
 
-        msgJSON.ativo = ativo
+        var exchange = 'BOLSADEVALORES';
 
-        if(sentido == "venda")
-            FilaVenda.push(msgJSON)
-        if(sentido == "compra")
-            FilaCompra.push(msgJSON)
+        channel.assertExchange(exchange, 'topic', {
+          durable: false
+        });
+
+        channel.publish(exchange, msg.fields.routingKey, Buffer.from(msg.content.toString()));
+
+        console.log(" [x] Sent %s:'%s'", msg.fields.routingKey, msg.content.toString());
 
       }, {
         noAck: false
       });
+
     });
   });
 });
