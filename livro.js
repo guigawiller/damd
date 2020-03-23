@@ -4,9 +4,6 @@
 var amqp = require('amqplib/callback_api');
 var args = process.argv.slice(2);
 
-var compra = [];
-var venda = [];
-
 if (args.length == 0) {
   console.log("Usage: receive_logs_topic.js <facility>.<severity>");
   process.exit(1);
@@ -38,19 +35,22 @@ amqp.connect('amqp://localhost', function (error0, connection) {
         channel.bindQueue(q.queue, exchange, key);
       });
 
+      var venda = [];
+      var compra = [];
+
       channel.consume(q.queue, function (msg) {
-        cont++;
         let sentido = msg.fields.routingKey.split(".")[0]
         let ativo = msg.fields.routingKey.split(".")[1]
         let msgJSON = JSON.parse(msg.content.toString())
         msgJSON.ativo = ativo
 
-        if (msgJSON.sentido == "compra")
-          preencheCompra(msgJSON)
+        if (sentido == "compra")
+            preencheCompra(compra, venda, msgJSON)
         else
-          preencheVenda(msgJSON)
+          preencheVenda(compra, venda, msgJSON)
 
-          console.log(compra)
+          console.log("Compra -",compra)
+          console.log("Venda - ",venda)
 
       }, {
         noAck: false
@@ -66,13 +66,16 @@ function transacao(msg, channel) {
 
 }
 
-function preencheCompra(elementoCompra, msg, channel) {
+function preencheCompra(msg, channel, compra, venda, elementoCompra) {
+
   let ocorreuTransacao = false;
   let indexVendaCompativel;
   //  VERIFICA O ARRAY VENDA PARA CASO HAJA TRANSAÇÃO
   for (let i = 0; i < venda.length; i++) {
-    if (venda.ativo == elementoCompra.ativo) {
-      //PRECO COMPATIVEL
+
+    if (venda[i].ativo == elementoCompra.ativo) {
+      
+    //PRECO COMPATIVEL
       if (venda[i].val <= elementoCompra.val) {
         ocorreuTransacao = true;
         indexVendaCompativel = i;
@@ -98,12 +101,13 @@ function preencheCompra(elementoCompra, msg, channel) {
   }
 }
 
-function preencheVenda(elementoVenda, msg, channel) {
+function preencheVenda(msg, channel, compra, venda, elementoVenda) {
+
   let ocorreuTransacao = false;
   let indexCompraCompativel;
   //  VERIFICA O ARRAY COMPRA PARA CASO HAJA TRANSAÇÃO
   for (let i = 0; i < compra.length; i++) {
-    if (compra.ativo == elementoVenda.ativo) {
+    if (compra[i].ativo == elementoVenda.ativo) {
       //PRECO COMPATIVEL
       if (compra[i].val <= elementoVenda.val) {
         ocorreuTransacao = true;
@@ -115,7 +119,7 @@ function preencheVenda(elementoVenda, msg, channel) {
 
   if (ocorreuTransacao) {
     transacao();
-    let result = elementoVenda.quant - compra[i].quant
+    let result = elementoVenda.quant - compra[indexCompraCompativel].quant
 
     if (result > 0) {//se sobrou ordem de venda a função é chamada de novo
       elementoVenda.quant = result
