@@ -1,5 +1,6 @@
 #!/usr/bin/env node
  // const fs = require('fs');
+ const moment = require ('moment');
 var amqp = require('amqplib/callback_api');
 var args = process.argv.slice(2);
 
@@ -58,11 +59,14 @@ amqp.connect('amqp://localhost', function (error0, connection) {
   });
 });
 
-function transacao() {
+function transacao(msg, channel) {
+
+  channel.publish('TRANSACAO', msg.fields.routingKey, Buffer
+    .from("data:" + moment() + msg.content.toString()));
 
 }
 
-function preencheCompra(elementoCompra) {
+function preencheCompra(elementoCompra, msg, channel) {
   let ocorreuTransacao = false;
   let indexVendaCompativel;
   //  VERIFICA O ARRAY VENDA PARA CASO HAJA TRANSAÇÃO
@@ -78,7 +82,6 @@ function preencheCompra(elementoCompra) {
   }
 
   if (ocorreuTransacao) {
-    transacao();
     let result = elementoCompra.quant - venda[i].quant
     //se sobrou ordem de compra a função é chamada de novo
     if (result > 0) {
@@ -89,12 +92,13 @@ function preencheCompra(elementoCompra) {
     } else if (result < 0) {//se o resultado é menor que 0, resta venda e o valor é atualizado
       venda[indexVendaCompativel].quant = result * -1
     }
+    transacao(msg, channel);
   } else{
     compra.push(elementoCompra)
   }
 }
 
-function preencheVenda(elementoVenda) {
+function preencheVenda(elementoVenda, msg, channel) {
   let ocorreuTransacao = false;
   let indexCompraCompativel;
   //  VERIFICA O ARRAY COMPRA PARA CASO HAJA TRANSAÇÃO
@@ -121,6 +125,7 @@ function preencheVenda(elementoVenda) {
     } else if (result < 0) {//se o resultado é menor que 0, resta compra e o valor é atualizado
       compra[indexCompraCompativel].quant = result * -1
     }
+    transacao(msg, channel);
   } else{
     venda.push(elementoVenda)
   }
