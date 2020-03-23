@@ -1,0 +1,23 @@
+{
+  "name": "damd",
+  "version": "1.0.0",
+  "description": "docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management",
+  "main": "bolsa.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guigawiller/damd.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/guigawiller/damd/issues"
+  },
+  "homepage": "https://github.com/guigawiller/damd#readme",
+  "devDependencies": {
+    "nodemon": "^2.0.2"
+  },
+  "dependencies": {}
+}
