@@ -38,7 +38,7 @@ amqp.connect('amqp://localhost', function(error0, connection) {
 
       channel.consume(q.queue, function(msg) {
         // console.log(" [x] %s:'%s'", msg.fields.routingKey, msg.content.toString());
-        console.log(msg.content.toString());
+
         var jsonObj = JSON.parse(msg.content.toString())
         var jsonContent = JSON.stringify(jsonObj);
         fs.writeFile("banco.json", jsonContent, 'utf8', function (err) {
@@ -47,8 +47,7 @@ amqp.connect('amqp://localhost', function(error0, connection) {
                 return console.log(err);
             }
         })
-
-
+        console.log("dados persistidos")
       }, {
         noAck: false
       });
